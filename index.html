@@ -62,52 +62,88 @@ Wardrobe.csv を読み込み中...
 
 <script>
 
-const tops = [
-  {id:"T003", name:"白長袖シャツ"},
-  {id:"T015", name:"ライトブルーデニムシャツ"},
-  {id:"T028", name:"ネイビー長袖コットンスウェットジャケット"},
-  {id:"T001", name:"ブルーグレー長袖シャツ"},
-  {id:"T005", name:"白半袖シャツ"}
-];
+let tops = [];
+let bottoms = [];
+let shoes = [];
 
-const bottoms = [
-  {id:"B021", name:"ベージュコーデュロイパンツ"},
-  {id:"B039", name:"真紺ジーンズ"},
-  {id:"B040", name:"紺ジーンズ"},
-  {id:"B017", name:"ダークブラウンコーデュロイパンツ"},
-  {id:"B029", name:"カーキパンツ"}
-];
+async function loadCSV() {
 
-const shoes = [
-  {id:"S011", name:"adidas COUNTRY 黒"},
-  {id:"S012", name:"adidas SAMBA オレンジ"},
-  {id:"S005", name:"New Balance CM996 グレー"},
-  {id:"S006", name:"New Balance CM996 ベージュ"}
-];
+  const response = await fetch("Wardrobe.csv");
+  const text = await response.text();
 
-function randomItem(arr){
-  return arr[Math.floor(Math.random()*arr.length)];
+  const rows = text.split(/\r?\n/);
+
+  rows.slice(1).forEach(row => {
+
+    if (!row.trim()) return;
+
+    const cols = row.split(",");
+
+    const id = cols[0]?.trim();
+    const category = cols[1]?.trim();
+    const itemName = cols[2]?.trim();
+
+    if (!id || !itemName) return;
+
+    const item = {
+      id: id,
+      name: itemName
+    };
+
+    if (id.startsWith("T")) {
+      tops.push(item);
+    }
+
+    if (id.startsWith("B")) {
+      bottoms.push(item);
+    }
+
+    if (id.startsWith("S")) {
+      shoes.push(item);
+    }
+
+  });
+
+  generateOutfit();
 }
 
-function generateOutfit(){
+function randomItem(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function generateOutfit() {
+
+  if (
+    tops.length === 0 ||
+    bottoms.length === 0 ||
+    shoes.length === 0
+  ) return;
 
   const top = randomItem(tops);
   const bottom = randomItem(bottoms);
   const shoe = randomItem(shoes);
 
   document.getElementById("result").innerHTML = `
-    <p><strong>トップス</strong><br>
-    ${top.id}：${top.name}</p>
 
-    <p><strong>ボトムス</strong><br>
-    ${bottom.id}：${bottom.name}</p>
+    <p>
+      <strong>トップス</strong><br>
+      ${top.id}：${top.name}
+    </p>
 
-    <p><strong>シューズ</strong><br>
-    ${shoe.id}：${shoe.name}</p>
+    <p>
+      <strong>ボトムス</strong><br>
+      ${bottom.id}：${bottom.name}
+    </p>
+
+    <p>
+      <strong>シューズ</strong><br>
+      ${shoe.id}：${shoe.name}
+    </p>
+
   `;
 }
 
-generateOutfit();
+loadCSV();
 
 </script>
 
