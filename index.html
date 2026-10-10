@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Closet</title>
+  <style>
+    body{
+      font-family: sans-serif;
+      max-width: 800px;
+      margin:auto;
+      padding:20px;
+      background:#f5f5f5;
+    }
+
+    .card{
+      background:white;
+      padding:20px;
+      border-radius:10px;
+      margin-top:20px;
+      box-shadow:0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    button{
+      background:#0078d4;
+      color:white;
+      border:none;
+      padding:10px 20px;
+      border-radius:5px;
+      cursor:pointer;
+    }
+  </style>
+</head>
+<body>
+
+<h1>AI Closet</h1>
+
+<div class="card">
+<h2>今日のおすすめコーデ</h2>
+
+<p>トップス：白シャツ</p>
+<p>ボトムス：真紺ジーンズ</p>
+<p>シューズ：adidas COUNTRY 黒</p>
+<p>バッグ：ダークグレーショルダー</p>
+
+<button onclick="generate()">別のコーデを提案</button>
+</div>
+
+<script>
+function generate(){
+
+const outfits = [
+
+{
+top:"ネイビーシャツ",
+bottom:"ベージュコーデュロイ",
+shoes:"New Balance グレー"
+},
+
+{
+top:"デニムシャツ",
+bottom:"真紺ジーンズ",
+shoes:"adidas SAMBA オレンジ"
+},
+
+{
+top:"白シャツ",
+bottom:"紺ジーンズ",
+shoes:"adidas COUNTRY 黒"
+}
+
+];
+
+const item =
+outfits[Math.floor(Math.random()*outfits.length)];
+
+document.querySelector(".card").innerHTML=
+`
+<h2>今日のおすすめコーデ</h2>
+<p>トップス：${item.top}</p>
+<p>ボトムス：${item.bottom}</p>
+<p>シューズ：${item.shoes}</p>
+<button onclick="generate()">別のコーデを提案</button>
+`;
+}
+</script>
+
+</body>
+</html>
