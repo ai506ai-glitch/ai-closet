@@ -46,6 +46,60 @@ button:hover{
 
 <div class="card">
 
+<h3>条件指定</h3>
+
+<p>
+
+季節
+
+<select id="season">
+
+<option value="all">
+すべて
+</option>
+
+<option value="春">
+春
+</option>
+
+<option value="夏">
+夏
+</option>
+
+<option value="秋">
+秋
+</option>
+
+<option value="冬">
+冬
+</option>
+
+</select>
+
+</p>
+
+<p>
+
+使いたいアイテム
+
+<select id="fixedItem">
+<option value="">
+指定なし
+</option>
+</select>
+
+</p>
+
+<button onclick="generateOutfit()">
+コーデ生成
+</button>
+
+</div>
+
+<br>
+
+<div class="card">
+
 <h2>今日のおすすめコーデ</h2>
 
 <div id="result" class="loading">
@@ -65,6 +119,9 @@ Wardrobe.csv を読み込み中...
 let tops = [];
 let bottoms = [];
 let shoes = [];
+let bags = [];
+let inners = [];
+let allItems = [];
 
 async function loadCSV() {
 
@@ -75,72 +132,210 @@ async function loadCSV() {
 
   rows.slice(1).forEach(row => {
 
-    if (!row.trim()) return;
+    if(!row.trim()) return;
 
     const cols = row.split(",");
 
-    const id = cols[0]?.trim();
-    const category = cols[1]?.trim();
-    const itemName = cols[2]?.trim();
-
-    if (!id || !itemName) return;
-
     const item = {
-      id: id,
-      name: itemName
+      id: cols[0]?.trim(),
+      category: cols[1]?.trim(),
+      name: cols[2]?.trim(),
+      color: cols[3]?.trim(),
+      season: cols[6]?.trim()
     };
 
-    if (id.startsWith("T")) {
-      tops.push(item);
-    }
+    if(!item.id) return;
 
-    if (id.startsWith("B")) {
-      bottoms.push(item);
-    }
+    allItems.push(item);
 
-    if (id.startsWith("S")) {
-      shoes.push(item);
-    }
+    if(item.id.startsWith("T")) tops.push(item);
+    if(item.id.startsWith("B")) bottoms.push(item);
+    if(item.id.startsWith("S")) shoes.push(item);
+    if(item.id.startsWith("A")) bags.push(item);
+    if(item.id.startsWith("I")) inners.push(item);
 
   });
 
+  buildSelector();
   generateOutfit();
 }
 
-function randomItem(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
+function buildSelector(){
+
+  const select = document.getElementById("fixedItem");
+
+  allItems.forEach(item => {
+
+    const option = document.createElement("option");
+
+    option.value = item.id;
+
+    option.textContent =
+      `${item.id} ${item.name}`;
+
+    select.appendChild(option);
+
+  });
+
 }
 
-function generateOutfit() {
+function randomItem(arr){
+  return arr[Math.floor(Math.random()*arr.length)];
+}
 
-  if (
-    tops.length === 0 ||
-    bottoms.length === 0 ||
-    shoes.length === 0
-  ) return;
+function colorWarning(top,bottom){
 
-  const top = randomItem(tops);
-  const bottom = randomItem(bottoms);
-  const shoe = randomItem(shoes);
+  const darkWords = [
+    "ネイビー",
+    "紺",
+    "ブルー",
+    "青",
+    "ブラック",
+    "黒"
+  ];
+
+  const topDark =
+    darkWords.some(word =>
+      (top.color || "").includes(word));
+
+  const bottomDark =
+    darkWords.some(word =>
+      (bottom.color || "").includes(word));
+
+  if(topDark && bottomDark){
+
+    return `
+    <p style="color:#d35400">
+    ⚠ トップスとボトムスが同系色寄りです
+    </p>
+    `;
+
+  }
+
+  return "";
+
+}
+
+function seasonMatch(item,season){
+
+  if(season==="all") return true;
+
+  return (item.season || "")
+    .includes(season);
+
+}
+
+function generateOutfit(){
+
+  const season =
+    document.getElementById("season").value;
+
+  const fixedId =
+    document.getElementById("fixedItem").value;
+
+  let top;
+  let bottom;
+  let shoe;
+  let bag;
+  let inner;
+
+  const filteredTops =
+    tops.filter(x=>seasonMatch(x,season));
+
+  const filteredBottoms =
+    bottoms.filter(x=>seasonMatch(x,season));
+
+  const filteredShoes =
+    shoes.filter(x=>seasonMatch(x,season));
+
+  top = randomItem(filteredTops);
+  bottom = randomItem(filteredBottoms);
+  shoe = randomItem(filteredShoes);
+
+  bag = randomItem(bags);
+  inner = randomItem(inners);
+
+  if(fixedId){
+
+    const fixed =
+      allItems.find(x=>x.id===fixedId);
+
+    if(fixed){
+
+      if(fixed.id.startsWith("T"))
+        top = fixed;
+
+      if(fixed.id.startsWith("B"))
+        bottom = fixed;
+
+      if(fixed.id.startsWith("S"))
+        shoe = fixed;
+
+      if(fixed.id.startsWith("A"))
+        bag = fixed;
+
+      if(fixed.id.startsWith("I"))
+        inner = fixed;
+    }
+  }
 
   document.getElementById("result").innerHTML = `
 
-    <p>
-      <strong>トップス</strong><br>
-      ${top.id}：${top.name}
-    </p>
+  <p>
+  <strong>インナー</strong><br>
+  ${inner.id}：${inner.name}
+  </p>
 
-    <p>
-      <strong>ボトムス</strong><br>
-      ${bottom.id}：${bottom.name}
-    </p>
+  <p>
+  <strong>トップス</strong><br>
+  ${top.id}：${top.name}
+  </p>
 
-    <p>
-      <strong>シューズ</strong><br>
-      ${shoe.id}：${shoe.name}
-    </p>
+  <p>
+  <strong>ボトムス</strong><br>
+  ${bottom.id}：${bottom.name}
+  </p>
+
+  <p>
+  <strong>シューズ</strong><br>
+  ${shoe.id}：${shoe.name}
+  </p>
+
+  <p>
+  <strong>バッグ</strong><br>
+  ${bag.id}：${bag.name}
+  </p>
+
+  ${colorWarning(top,bottom)}
+
+  <hr>
+
+  <button onclick="showImages()">
+  写真表示
+  </button>
+
+  <button onclick="generateImage()">
+  コーデ画像生成
+  </button>
 
   `;
+
+}
+
+function showImages(){
+
+  alert(
+   "将来OneDrive連携時に写真表示"
+  );
+
+}
+
+function generateImage(){
+
+  alert(
+   "将来AI着用画像を生成"
+  );
+
 }
 
 loadCSV();
