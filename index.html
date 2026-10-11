@@ -114,6 +114,7 @@ Wardrobe.csv を読み込み中...
 
 </div>
 
+
 <script>
 
 let tops = [];
@@ -121,57 +122,86 @@ let bottoms = [];
 let shoes = [];
 let bags = [];
 let inners = [];
+let outers = [];
 let allItems = [];
 
 async function loadCSV() {
 
-  const response = await fetch("Wardrobe.csv");
-  const text = await response.text();
+  try {
 
-  const rows = text.split(/\r?\n/);
+    const response = await fetch("Wardrobe.csv");
 
-  rows.slice(1).forEach(row => {
+    const text =
+      await response.text();
 
-    if(!row.trim()) return;
+    const rows =
+      text.split(/\r?\n/);
 
-    const cols = row.split(",");
+    rows.slice(1).forEach(row => {
 
-    const item = {
-      id: cols[0]?.trim(),
-      category: cols[1]?.trim(),
-      name: cols[2]?.trim(),
-      color: cols[3]?.trim(),
-      season: cols[6]?.trim()
-    };
+      if(!row.trim()) return;
 
-    if(!item.id) return;
+      const cols = row.split(",");
 
-    allItems.push(item);
+      const item = {
 
-    if(item.id.startsWith("T")) tops.push(item);
-    if(item.id.startsWith("B")) bottoms.push(item);
-    if(item.id.startsWith("S")) shoes.push(item);
-    if(item.id.startsWith("A")) bags.push(item);
-    if(item.id.startsWith("I")) inners.push(item);
+        id: cols[0]?.trim(),
+        category: cols[1]?.trim(),
+        name: cols[2]?.trim(),
+        color: cols[3]?.trim(),
+        pattern: cols[4]?.trim(),
+        material: cols[5]?.trim(),
+        season: cols[6]?.trim(),
+        taste: cols[7]?.trim(),
+        easyMatch: cols[8]?.trim(),
+        memo: cols[9]?.trim(),
+        image: cols[10]?.trim()
 
-  });
+      };
 
-  buildSelector();
-  generateOutfit();
+      if(!item.id) return;
+
+      allItems.push(item);
+
+      if(item.id.startsWith("T")) tops.push(item);
+      if(item.id.startsWith("B")) bottoms.push(item);
+      if(item.id.startsWith("S")) shoes.push(item);
+      if(item.id.startsWith("A")) bags.push(item);
+      if(item.id.startsWith("I")) inners.push(item);
+      if(item.id.startsWith("O")) outers.push(item);
+
+    });
+
+    buildSelector();
+
+    generateOutfit();
+
+  }
+  catch(error){
+
+    document.getElementById("result")
+      .innerHTML =
+      "CSVの読込に失敗しました";
+
+    console.error(error);
+  }
+
 }
 
 function buildSelector(){
 
-  const select = document.getElementById("fixedItem");
+  const select =
+    document.getElementById("fixedItem");
 
-  allItems.forEach(item => {
+  allItems.forEach(item=>{
 
-    const option = document.createElement("option");
+    const option =
+      document.createElement("option");
 
     option.value = item.id;
 
     option.textContent =
-      `${item.id} ${item.name}`;
+      `${item.id} : ${item.name}`;
 
     select.appendChild(option);
 
@@ -180,48 +210,69 @@ function buildSelector(){
 }
 
 function randomItem(arr){
-  return arr[Math.floor(Math.random()*arr.length)];
+
+  if(!arr || arr.length === 0){
+    return null;
+  }
+
+  return arr[
+    Math.floor(
+      Math.random() * arr.length
+    )
+  ];
+
+}
+
+function seasonMatch(item, season){
+
+  if(season === "all"){
+    return true;
+  }
+
+  return (
+    item.season || ""
+  ).includes(season);
+
 }
 
 function colorWarning(top,bottom){
 
   const darkWords = [
+
+    "ブラック",
+    "黒",
     "ネイビー",
     "紺",
-    "ブルー",
-    "青",
-    "ブラック",
-    "黒"
+    "チャコール",
+    "ダークグレー",
+    "ダークブラウン",
+    "ダークネイビー"
+
   ];
 
   const topDark =
     darkWords.some(word =>
-      (top.color || "").includes(word));
+      (top.color || "")
+      .includes(word)
+    );
 
   const bottomDark =
     darkWords.some(word =>
-      (bottom.color || "").includes(word));
+      (bottom.color || "")
+      .includes(word)
+    );
 
   if(topDark && bottomDark){
 
     return `
-    <p style="color:#d35400">
-    ⚠ トップスとボトムスが同系色寄りです
-    </p>
+      <p style="color:#d35400;">
+      ⚠ トップスとボトムスが濃色同士です
+      </p>
     `;
 
   }
 
   return "";
-
-}
-
-function seasonMatch(item,season){
-
-  if(season==="all") return true;
-
-  return (item.season || "")
-    .includes(season);
 
 }
 
@@ -233,32 +284,46 @@ function generateOutfit(){
   const fixedId =
     document.getElementById("fixedItem").value;
 
-  let top;
-  let bottom;
-  let shoe;
-  let bag;
-  let inner;
+  let top =
+    randomItem(
+      tops.filter(
+        x=>seasonMatch(x,season)
+      )
+    );
 
-  const filteredTops =
-    tops.filter(x=>seasonMatch(x,season));
+  let bottom =
+    randomItem(
+      bottoms.filter(
+        x=>seasonMatch(x,season)
+      )
+    );
 
-  const filteredBottoms =
-    bottoms.filter(x=>seasonMatch(x,season));
+  let shoe =
+    randomItem(
+      shoes.filter(
+        x=>seasonMatch(x,season)
+      )
+    );
 
-  const filteredShoes =
-    shoes.filter(x=>seasonMatch(x,season));
+  let bag =
+    randomItem(bags);
 
-  top = randomItem(filteredTops);
-  bottom = randomItem(filteredBottoms);
-  shoe = randomItem(filteredShoes);
+  let inner =
+    randomItem(inners);
 
-  bag = randomItem(bags);
-  inner = randomItem(inners);
+  let outer =
+    randomItem(
+      outers.filter(
+        x=>seasonMatch(x,season)
+      )
+    );
 
   if(fixedId){
 
     const fixed =
-      allItems.find(x=>x.id===fixedId);
+      allItems.find(
+        x=>x.id===fixedId
+      );
 
     if(fixed){
 
@@ -276,71 +341,78 @@ function generateOutfit(){
 
       if(fixed.id.startsWith("I"))
         inner = fixed;
+
+      if(fixed.id.startsWith("O"))
+        outer = fixed;
+
     }
+
+  }
+
+  if(
+    !top ||
+    !bottom ||
+    !shoe
+  ){
+
+    document.getElementById("result")
+      .innerHTML =
+      "条件に一致するアイテムがありません";
+
+    return;
+
   }
 
   document.getElementById("result").innerHTML = `
 
-  <p>
-  <strong>インナー</strong><br>
-  ${inner.id}：${inner.name}
-  </p>
+  <h3>おすすめコーデ</h3>
 
-  <p>
-  <strong>トップス</strong><br>
-  ${top.id}：${top.name}
-  </p>
+  <p><strong>インナー</strong><br>
+  ${inner.id}：${inner.name}</p>
 
-  <p>
-  <strong>ボトムス</strong><br>
-  ${bottom.id}：${bottom.name}
-  </p>
+  <p><strong>トップス</strong><br>
+  ${top.id}：${top.name}</p>
 
-  <p>
-  <strong>シューズ</strong><br>
-  ${shoe.id}：${shoe.name}
-  </p>
+  ${outer ? `
+  <p><strong>アウター</strong><br>
+  ${outer.id}：${outer.name}</p>
+  ` : ""}
 
-  <p>
-  <strong>バッグ</strong><br>
-  ${bag.id}：${bag.name}
-  </p>
+  <p><strong>ボトムス</strong><br>
+  ${bottom.id}：${bottom.name}</p>
+
+  <p><strong>シューズ</strong><br>
+  ${shoe.id}：${shoe.name}</p>
+
+  <p><strong>バッグ</strong><br>
+  ${bag.id}：${bag.name}</p>
 
   ${colorWarning(top,bottom)}
 
   <hr>
 
-  <button onclick="showImages()">
-  写真表示
-  </button>
+  <h4>コーデポイント</h4>
 
-  <button onclick="generateImage()">
-  コーデ画像生成
-  </button>
+  <p>${top.memo || ""}</p>
+
+  <hr>
+
+  <h4>画像ファイル</h4>
+
+  <p>${top.image || ""}</p>
+
+  <p>${bottom.image || ""}</p>
+
+  <p>${shoe.image || ""}</p>
 
   `;
-
-}
-
-function showImages(){
-
-  alert(
-   "将来OneDrive連携時に写真表示"
-  );
-
-}
-
-function generateImage(){
-
-  alert(
-   "将来AI着用画像を生成"
-  );
 
 }
 
 loadCSV();
 
 </script>
+
 
 </body>
 </html>
