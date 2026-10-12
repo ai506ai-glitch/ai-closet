@@ -829,38 +829,53 @@ ${shoeResult.item.ID}
 
 function createImagePath(item){
 
-  if(!item || !item["画像"]){
+  if(!item){
     return "";
   }
 
-  const file =
-    item["画像"]
-    .split("/")
-    [0]
+  const imageFile =
+    (
+      item["画像"] ||
+      item["image"] ||
+      ""
+    )
+    .split(" / ")[0]
     .trim();
 
-  const id =
-    item.ID;
+  if(!imageFile){
+    return "";
+  }
 
-  if(id.startsWith("T"))
-    return `Tops/${file}`;
+  const id = item.ID;
 
-  if(id.startsWith("B"))
-    return `Bottoms/${file}`;
+  let path = "";
 
-  if(id.startsWith("S"))
-    return `Shoes/${file}`;
+  if(id.startsWith("T")){
+    path = `Tops/${imageFile}`;
+  }
+  else if(id.startsWith("B")){
+    path = `Bottoms/${imageFile}`;
+  }
+  else if(id.startsWith("S")){
+    path = `Shoes/${imageFile}`;
+  }
+  else if(id.startsWith("A")){
+    path = `Bags/${imageFile}`;
+  }
+  else if(id.startsWith("I")){
+    path = `Inner/${imageFile}`;
+  }
+  else if(id.startsWith("O")){
+    path = `Outer/${imageFile}`;
+  }
 
-  if(id.startsWith("A"))
-    return `Bags/${file}`;
+  console.log(
+    item.ID,
+    imageFile,
+    path
+  );
 
-  if(id.startsWith("I"))
-    return `Inner/${file}`;
-
-  if(id.startsWith("O"))
-    return `Outer/${file}`;
-
-  return file;
+  return path;
 }
 
 loadCSV();
