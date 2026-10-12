@@ -150,8 +150,12 @@ button:hover{
 <h2>今日のおすすめコーデ</h2>
 
 <div id="result" class="loading">
-Wardrobe.csv を読み込み中...
+Wardrobe.csv を読み込み中です。読み込めない場合は、下のボタンからCSVファイルを選択してください。
 </div>
+<p>
+  <label for="csvFile">Wardrobe.csv を選択：</label>
+  <input type="file" id="csvFile" accept=".csv,text/csv">
+</p>
 
 <br>
 
@@ -175,41 +179,70 @@ let outers = [];
 
 const HISTORY_KEY = "aiClosetHistory";
 
-async function loadCSV(){
+function loadCSV(){
+  const result = document.getElementById("result");
+  result.textContent = "Wardrobe.csv を読み込み中...";
 
+  // 同じフォルダーからの自動読み込みを試す（HTTP/HTTPSで開いた場合）
   Papa.parse("Wardrobe.csv", {
-
     download: true,
     header: true,
-
-    complete: function(results){
-
-      allItems = results.data.filter(
-        item => item.ID
-      );
-
-      allItems.forEach(item => {
-
-        const id = item.ID;
-
-        if(id.startsWith("T")) tops.push(item);
-        if(id.startsWith("B")) bottoms.push(item);
-        if(id.startsWith("S")) shoes.push(item);
-        if(id.startsWith("A")) bags.push(item);
-        if(id.startsWith("I")) inners.push(item);
-        if(id.startsWith("O")) outers.push(item);
-
-      });
-
-      buildSelector();
-
-      generateOutfit();
-
+    skipEmptyLines: true,
+    complete: function(results) {
+      const rows = (results.data || []).filter(item => item.ID && item.ID.trim());
+      if (rows.length === 0) {
+        showCSVHelp("Wardrobe.csv を自動で読み込めませんでした。下のファイル選択からCSVを指定してください。");
+        return;
+      }
+      setWardrobeData(rows);
+    },
+    error: function(error) {
+      console.error("CSV読み込みエラー:", error);
+      showCSVHelp("Wardrobe.csv を自動で読み込めませんでした。下のファイル選択からCSVを指定してください。");
     }
-
   });
-
 }
+
+function showCSVHelp(message) {
+  const result = document.getElementById("result");
+  result.className = "loading";
+  result.textContent = message;
+}
+
+function setWardrobeData(rows) {
+  allItems = rows;
+  tops = allItems.filter(item => item.ID.startsWith("T"));
+  bottoms = allItems.filter(item => item.ID.startsWith("B"));
+  shoes = allItems.filter(item => item.ID.startsWith("S"));
+  bags = allItems.filter(item => item.ID.startsWith("A"));
+  inners = allItems.filter(item => item.ID.startsWith("I"));
+  outers = allItems.filter(item => item.ID.startsWith("O"));
+
+  buildSelector();
+  generateOutfit();
+}
+
+document.getElementById("csvFile").addEventListener("change", function(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  Papa.parse(file, {
+    header: true,
+    skipEmptyLines: true,
+    complete: function(results) {
+      const rows = (results.data || []).filter(item => item.ID && item.ID.trim());
+      if (rows.length === 0) {
+        showCSVHelp("CSVからID列のデータを読み取れませんでした。CSVの列名が「ID」か確認してください。");
+        return;
+      }
+      setWardrobeData(rows);
+    },
+    error: function(error) {
+      console.error("CSV解析エラー:", error);
+      showCSVHelp("CSVを解析できませんでした。ファイル形式を確認してください。");
+    }
+  });
+});
 
 function buildSelector(){
 
@@ -536,6 +569,10 @@ function pickBestMatch(baseItem, candidates){
 
   });
 
+  if (!best || !bestResult) {
+    return { item: null, score: { score: 0, reasons: ["候補アイテムなし"] } };
+  }
+
   return {
     item: best,
     score: bestResult
@@ -604,6 +641,11 @@ function generateOutfit(){
 
     );
 
+  if (!bottomResult.item) {
+    document.getElementById("result").textContent = "条件に合うボトムスがありません。季節条件またはCSVのデータを確認してください。";
+    return;
+  }
+
   const shoeResult =
     pickBestMatch(
 
@@ -621,6 +663,11 @@ function generateOutfit(){
       bags
 
     );
+
+  if (!shoeResult.item || !bagResult.item) {
+    document.getElementById("result").textContent = "シューズまたはバッグの候補がありません。CSVにSから始まるIDとAから始まるIDがあるか確認してください。";
+    return;
+  }
 
   const inner =
     randomItem(inners);
@@ -641,7 +688,7 @@ const overallScore =
     bagResult.score
   );
 
-console.log(item);
+console.log("選択アイテム:", top);
 const topImg =
   createImagePath(top);
 console.log(topImg);
