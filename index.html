@@ -43,6 +43,47 @@ button:hover{
 .loading{
   color:#666;
 }
+
+.gallery{
+  display:flex;
+  flex-wrap:wrap;
+  gap:16px;
+  margin-top:20px;
+}
+
+.thumb{
+  width:180px;
+  background:#fafafa;
+  border:1px solid #ddd;
+  border-radius:10px;
+  padding:10px;
+}
+
+.thumb img{
+  width:100%;
+  height:180px;
+  object-fit:cover;
+  border-radius:6px;
+}
+
+.score-good{
+  color:#2e7d32;
+  font-weight:bold;
+  font-size:28px;
+}
+
+.score-mid{
+  color:#ef6c00;
+  font-weight:bold;
+  font-size:28px;
+}
+
+.score-low{
+  color:#c62828;
+  font-weight:bold;
+  font-size:28px;
+}
+
 </style>
 </head>
 
@@ -106,6 +147,22 @@ button:hover{
 
 <div class="card">
 
+const overallScore =
+  calculateOverallScore(
+    bottomResult.score,
+    shoeResult.score,
+    bagResult.score
+  );
+
+const topImg =
+  createImagePath(top);
+
+const bottomImg =
+  createImagePath(bottomResult.item);
+
+const shoeImg =
+  createImagePath(shoeResult.item);
+      
 <h2>今日のおすすめコーデ</h2>
 
 <div id="result" class="loading">
@@ -366,6 +423,54 @@ function calculateScore(a,b){
 
 }
 
+function calculateOverallScore(
+  bottomScore,
+  shoeScore,
+  bagScore
+){
+
+  return Math.round(
+    (
+      bottomScore.score +
+      shoeScore.score +
+      bagScore.score
+    ) / 3
+  );
+
+}
+
+function scoreClass(score){
+
+  if(score >= 90){
+    return "score-good";
+  }
+
+  if(score >= 75){
+    return "score-mid";
+  }
+
+  return "score-low";
+
+}
+
+function scoreComment(score){
+
+  if(score >= 90){
+    return "かなり相性の良い鉄板コーデです";
+  }
+
+  if(score >= 80){
+    return "相性の良いおすすめコーデです";
+  }
+
+  if(score >= 70){
+    return "無難にまとまるコーデです";
+  }
+
+  return "やや冒険的な組み合わせです";
+
+}
+
 function saveHistory(ids){
 
   const history =
@@ -559,6 +664,20 @@ function generateOutfit(){
 
   <h3>おすすめコーデ</h3>
 
+<hr>
+
+<h2>総合評価</h2>
+
+<p class="${
+scoreClass(overallScore)
+}">
+${overallScore} 点
+</p>
+
+<p>
+${scoreComment(overallScore)}
+</p>
+
   <p><b>インナー</b><br>
   ${inner?.ID || ""}：
   ${inner?.アイテム || ""}</p>
@@ -648,9 +767,96 @@ function generateOutfit(){
   <p>
   ${top["着こなしメモ"] || ""}
   </p>
+<hr>
 
+<h3>アイテム画像</h3>
+
+<div class="gallery">
+
+<div class="thumb">
+
+<h4>トップス</h4>
+
+<img
+src="${topImg}"
+onerror="this.style.display='none'"
+>
+
+<div>
+${top.ID}
+</div>
+
+</div>
+
+<div class="thumb">
+
+<h4>ボトムス</h4>
+
+<img
+src="${bottomImg}"
+onerror="this.style.display='none'"
+>
+
+<div>
+${bottomResult.item.ID}
+</div>
+
+</div>
+
+<div class="thumb">
+
+<h4>シューズ</h4>
+
+<img
+src="${shoeImg}"
+onerror="this.style.display='none'"
+>
+
+<div>
+${shoeResult.item.ID}
+</div>
+
+</div>
+
+</div>
   `;
 
+}
+
+function createImagePath(item){
+
+  if(!item || !item["画像"]){
+    return "";
+  }
+
+  const file =
+    item["画像"]
+    .split("/")
+    [0]
+    .trim();
+
+  const id =
+    item.ID;
+
+  if(id.startsWith("T"))
+    return `Tops/${file}`;
+
+  if(id.startsWith("B"))
+    return `Bottoms/${file}`;
+
+  if(id.startsWith("S"))
+    return `Shoes/${file}`;
+
+  if(id.startsWith("A"))
+    return `Bags/${file}`;
+
+  if(id.startsWith("I"))
+    return `Inner/${file}`;
+
+  if(id.startsWith("O"))
+    return `Outer/${file}`;
+
+  return file;
 }
 
 loadCSV();
